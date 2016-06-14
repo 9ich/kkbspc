@@ -1,12 +1,84 @@
 CC=gcc
+
+HOST_PLATFORM:=$(shell uname | tr [:upper:] [:lower:] | sed 's/[_-].*//; s:/:_:g; s/32//; s/mingw/mingw32/; s/msys/mingw32/')
+HOST_ARCH:=$(shell uname -m | tr [:upper:] [:lower:] | sed 's/i.86/x86/; s/\-pc//')
+
+# fixup host os
+ifeq ($(HOST_PLATFORM),sunos)
+  # Solaris uname and GNU uname differ
+  HOST_ARCH=$(shell uname -p | sed -e s/i.86/x86/)
+endif
+ifeq ($(HOST_PLATFORM),darwin)
+  # Apple does some things a little differently...
+  HOST_ARCH=$(shell uname -p | sed -e s/i.86/x86/)
+endif
+
+ifeq ($(HOST_PLATFORM),cygwin)
+  PLATFORM=mingw32
+endif
+
+# target os
+ifndef PLATFORM
+PLATFORM=$(HOST_PLATFORM)
+endif
+export PLATFORM
+
+# fixup target os
+ifeq ($(PLATFORM),mingw32)
+  MINGW=1
+endif
+ifeq ($(PLATFORM),mingw64)
+  MINGW=1
+endif
+
+# fixup host arch
+ifeq ($(HOST_ARCH),i86pc)
+  HOST_ARCH=x86
+endif
+
+ifeq ($(HOST_ARCH),amd64)
+  HOST_ARCH=x86_64
+endif
+ifeq ($(HOST_ARCH),x64)
+  HOST_ARCH=x86_64
+endif
+
+ifeq ($(HOST_ARCH),powerpc)
+  HOST_ARCH=ppc
+endif
+ifeq ($(HOST_ARCH),powerpc64)
+  HOST_ARCH=ppc64
+endif
+
+ifeq ($(HOST_ARCH),axp)
+  HOST_ARCH=alpha
+endif
+
+# target arch
+ifndef ARCH
+ARCH=$(HOST_ARCH)
+endif
+export ARCH
+
+ifneq ($(PLATFORM),$(HOST_PLATFORM))
+  CROSS_COMPILING=1
+else
+  CROSS_COMPILING=0
+
+  ifneq ($(ARCH),$(HOST_ARCH))
+    CROSS_COMPILING=1
+  endif
+endif
+export CROSS_COMPILING
+
 CFLAGS=\
 	-Dstricmp=strcasecmp -DCom_Memcpy=memcpy -DCom_Memset=memset \
-	-DMAC_STATIC= -DQDECL= -DLINUX -DBSPC -D_FORTIFY_SOURCE=2 \
-	-I. -Ideps -Wall
+	-DMAC_STATIC= -DQDECL= -DBSPC -D_FORTIFY_SOURCE=2 \
+	-I. -Ideps -Wall -Wno-unknown-pragmas -fno-diagnostics-show-caret -fno-diagnostics-show-option
 
 RELEASE_CFLAGS=-O3 -ffast-math
 DEBUG_CFLAGS=-g -O0 -ffast-math
-LDFLAGS=-lm -lpthread
+LDFLAGS=-lm
 
 DO_CC=$(CC) $(CFLAGS) -o $@ -c $<
 
@@ -78,7 +150,54 @@ GAME_OBJS = \
 
         #tetrahedron.o
 
-EXEC = bspc
+
+#############################################################################
+# Windows
+#############################################################################
+
+ifdef MINGW
+  E=.exe
+  CFLAGS += -DWIN32 -D_WIN32
+  ifeq ($(CROSS_COMPILING),1)
+    # If CC is already set to something generic, we probably want to use
+    # something more specific
+    ifneq ($(findstring $(strip $(CC)),cc gcc),)
+      CC=
+    endif
+
+    # We need to figure out the correct gcc and windres
+    ifeq ($(ARCH),x86_64)
+      MINGW_PREFIXES=amd64-mingw32msvc x86_64-w64-mingw32
+    endif
+    ifeq ($(ARCH),x86)
+      MINGW_PREFIXES=i586-mingw32msvc i686-w64-mingw32 i686-pc-mingw32
+    endif
+
+    ifndef CC
+      CC=$(firstword $(strip $(foreach MINGW_PREFIX, $(MINGW_PREFIXES), \
+         $(call bin_path, $(MINGW_PREFIX)-gcc))))
+    endif
+  else
+    # Some MinGW installations define CC to cc, but don't actually provide cc,
+    # so check that CC points to a real binary and use gcc if it doesn't
+    ifeq ($(call bin_path, $(CC)),)
+      CC=gcc
+    endif
+  endif
+
+#############################################################################
+# Unix
+#############################################################################
+
+else    # ifeq MINGW
+
+  CFLAGS += -DLINUX
+  LDFLAGS += -lpthread
+
+endif # ifeq MINGW
+
+
+EXEC = bspc$E
 
 all: release
 
