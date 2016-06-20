@@ -667,7 +667,8 @@ int AAS_AreaCrouch(int areanum)
 //===========================================================================
 int AAS_AreaSwim(int areanum)
 {
-	if (aasworld.areasettings[areanum].areaflags & AREA_LIQUID) return qtrue;
+	// konkrete: fool bots into thinking they can swim in the air, since we're in zero-g
+	if (aasworld.areasettings[areanum].areaflags & AREA_LIQUID || !aasworld.areasettings[areanum].contents) return qtrue;
 	else return qfalse;
 } //end of the function AAS_AreaSwim
 //===========================================================================
@@ -679,7 +680,8 @@ int AAS_AreaSwim(int areanum)
 //===========================================================================
 int AAS_AreaLiquid(int areanum)
 {
-	if (aasworld.areasettings[areanum].areaflags & AREA_LIQUID) return qtrue;
+	// konkrete: fool bots into thinking they can swim in the air, since we're in zero-g
+	if (aasworld.areasettings[areanum].areaflags & AREA_LIQUID || !aasworld.areasettings[areanum].contents) return qtrue;
 	else return qfalse;
 } //end of the function AAS_AreaLiquid
 //===========================================================================
@@ -868,8 +870,8 @@ int AAS_Reachability_Swim(int area1num, int area2num)
 			if (face1num == face2num)
 			{
 				AAS_FaceCenter(face1num, start);
-				//
-				if (AAS_PointContents(start) & (CONTENTS_LAVA|CONTENTS_SLIME|CONTENTS_WATER))
+				// konkrete: swimming is normal movement in air
+				if ((AAS_PointContents(start) & (CONTENTS_LAVA|CONTENTS_SLIME|CONTENTS_WATER)) || AAS_PointContents(start) == 0)
 				{
 					//
 					face1 = &aasworld.faces[face1num];
