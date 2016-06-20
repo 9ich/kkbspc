@@ -1,10 +1,9 @@
-# bspc
+# kkbspc
 
-This is the [Quake III: Arena](http://www.idsoftware.com/games/quake/quake3-arena/) BSP-to-AAS compiler.
+This is the [Quake III: Arena](http://www.idsoftware.com/games/quake/quake3-arena/) BSP-to-AAS compiler (bspc).
+The reachability determination has been slightly modified in an attempt to make Q3 bots navigate correctly in a 6DOF world.
 
-## Downloading
-
-You can download the latest version [here](https://github.com/bnoordhuis/bspc).
+Forked from: https://github.com/bnoordhuis/bspc
 
 ## Compiling
 
@@ -17,8 +16,8 @@ Dead simple:
 Straight from the source:
 
 	Usage:   bspc [-<switch> [-<switch> ...]]
-	Example 1: bspc -bsp2aas /quake3/baseq3/maps/mymap?.bsp
-	Example 2: bspc -bsp2aas /quake3/baseq3/pak0.pk3/maps/q3dm*.bsp
+	Example 1: bspc -bsp2aas maps/mymap?.bsp
+	Example 2: bspc -bsp2aas pak0.pk3/maps/kdm*.bsp
 
 	Switches:
 	   bsp2aas  <[pakfilter/]filter.bsp>    = convert BSP to AAS
@@ -38,10 +37,6 @@ Straight from the source:
 	   nocsg                                = disables brush chopping
 	   forcesidesvisible                    = force all sides to be visible
 	   grapplereach                         = calculate grapple reachabilities
-
-## Support
-
-[File a bug report](https://github.com/bnoordhuis/bspc/issues) if you run into issues.
 
 ## License
 
